@@ -73,15 +73,19 @@ def get_display_date(browser):
 def reserve_date_class(browser, target_date, target_time):
     target_date_str = target_date.strftime("%Y-%m-%d")
     print(f'Try to reserve {target_date_str} {target_date.strftime("%A")}')
-    browser.execute_script(f"funcSearch01('{target_date_str}','C')")
-    reservelist_element = WebDriverWait(browser, TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#reserveList')))
-    if '(예약완료)' in reservelist_element.text:
-        print(f'You have a reservation for this day.({target_date_str})')
-        return []
-    li_elements = reservelist_element.find_elements_by_css_selector('li')
-    if not li_elements:
+    TOTAL_RETRY_CNT = 5
+    for i in range(TOTAL_RETRY_CNT):
+        browser.execute_script(f"funcSearch01('{target_date_str}','C')")
+        reservelist_element = WebDriverWait(browser, TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#reserveList')))
+        if '(예약완료)' in reservelist_element.text:
+            print(f'You have a reservation for this day.({target_date_str})')
+            return []
+        if '관련내용이 존재하지 않습니다' not in reservelist_element.text:
+            print(f'There are a lot of classes you can reserve')
+            break
         print(f'There are no classes yet({target_date_str})')
-        return []
+        time.sleep(5)
+    li_elements = reservelist_element.find_elements_by_css_selector('li:not(.nothing)')
     for li in li_elements:
         try:
             class_name = li.find_element_by_css_selector('.mName div').text
@@ -91,7 +95,7 @@ def reserve_date_class(browser, target_date, target_time):
                 continue
             if '(정원초과)' in class_num:
                 print(f'Can not reserve {class_name} {class_time}(정원초과)')
-                continue
+                break
             
             # 리스트에서 상세 보기 버튼 클릭
             # complete1: 예약 불가능(내 예약 존재)
@@ -123,13 +127,13 @@ def wait_for_openning_time(hour=OPENING_HOUR, minute=OPENING_MINUTE):
         now = datetime.now().astimezone(KST)
         print(f'wait_for : {target_time.strftime("%Y-%m-%d %H:%M:%S")} now: {now.strftime("%Y-%m-%d %H:%M:%S")}')
         if now > target_time: break
-        time.sleep(5)
+        time.sleep(1)
 
 def main(user, password, weekdays, target_time, wait_opening, slack_token, slack_channel):
     try:
         browser = init_browser()
         print('Start crawling')
-        print('Login {user}')
+        print(f'Login {user}')
         login(browser, user, password)
         display_date = get_display_date(browser)
         print(f'Today: {display_date}')
@@ -146,7 +150,13 @@ def main(user, password, weekdays, target_time, wait_opening, slack_token, slack
         reserved_classes = []
         for date in target_dates:
             reserved_classes += reserve_date_class(browser, date, target_time)
-        print(reserved_classes)
+        if reserved_classes:
+            print()
+            print(f'[Reserved classes]')
+            for each in reserved_classes:
+                print(f' - {each}')
+        else:
+            print('Couldn\'t book pilates classes')
     finally:
         pass
 
