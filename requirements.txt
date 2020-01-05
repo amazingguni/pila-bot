@@ -1,0 +1,8 @@
+certifi==2019.11.28
+chardet==3.0.4
+idna==2.8
+pytz==2019.3
+requests==2.22.0
+selenium==3.141.0
+slacker==0.13.0
+urllib3==1.25.7
