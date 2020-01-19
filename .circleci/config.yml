@@ -35,9 +35,9 @@ jobs:
 workflows:
   commit:
     jobs:
-      - pila
+      - pila:
           context: soyeon
-      - pila
+      - pila:
           context: jiye
   openning-soyeon:
     triggers:
@@ -49,4 +49,8 @@ workflows:
                 - master
     jobs:
       - pila:
+          context: soyeon
+          extra-opts : "--wait-opening"
+      - pila:
+          context: jiye
           extra-opts : "--wait-opening"
