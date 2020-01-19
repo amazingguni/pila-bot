@@ -36,7 +36,10 @@ workflows:
   commit:
     jobs:
       - pila
-  openning:
+          context: soyeon
+      - pila
+          context: jiye
+  openning-soyeon:
     triggers:
       - schedule:
           cron: "50 2 * * *"
