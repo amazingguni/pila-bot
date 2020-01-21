@@ -70,21 +70,28 @@ def get_display_date(browser):
     element = WebDriverWait(browser, TIMEOUT).until(EC.presence_of_element_located((By.ID, 'datepickerC')))
     return element.get_attribute("value")
 
+def is_reserved_before(reservelist_element):
+    return '(예약완료)' in reservelist_element.text
+
+def is_openned(reservelist_element):
+    return '관련내용이 존재하지 않습니다' not in reservelist_element.text
+        
 def reserve_date_class(browser, target_date, target_time):
     target_date_str = target_date.strftime("%Y-%m-%d")
     print(f'Try to reserve {target_date_str} {target_date.strftime("%A")}')
-    TOTAL_RETRY_CNT = 5
+    TOTAL_RETRY_CNT = 30
     for i in range(TOTAL_RETRY_CNT):
         browser.execute_script(f"funcSearch01('{target_date_str}','C')")
         reservelist_element = WebDriverWait(browser, TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#reserveList')))
-        if '(예약완료)' in reservelist_element.text:
+        if is_reserved_before(reservelist_element):
             print(f'You have a reservation for this day.({target_date_str})')
             return []
-        if '관련내용이 존재하지 않습니다' not in reservelist_element.text:
-            print(f'There are a lot of classes you can reserve')
+        if is_openned(reservelist_element):
+            print(f'There are a lot of classes you can reserve. target date is openned!!!')
             break
         print(f'There are no classes yet({target_date_str})')
-        time.sleep(5)
+        time.sleep(0.5)
+        
     li_elements = reservelist_element.find_elements_by_css_selector('li:not(.nothing)')
     for li in li_elements:
         try:
@@ -108,7 +115,7 @@ def reserve_date_class(browser, target_date, target_time):
             reserve_button_element.click()
 
             # 수강 신청 완료 확인 버튼 클릭
-            WebDriverWait(browser, 3).until(EC.alert_is_present())
+            WebDriverWait(browser, TIMEOUT).until(EC.alert_is_present())
             alert = browser.switch_to_alert()
             alert_text = alert.text
             alert.accept()
@@ -126,8 +133,10 @@ def wait_for_openning_time(hour=OPENING_HOUR, minute=OPENING_MINUTE):
     while True:
         now = datetime.now().astimezone(KST)
         print(f'wait_for : {target_time.strftime("%Y-%m-%d %H:%M:%S")} now: {now.strftime("%Y-%m-%d %H:%M:%S")}')
-        if now > target_time: break
-        time.sleep(1)
+        remain_seconds = (target_time - now).total_seconds()
+        # 10초 전까지 슬립
+        if remain_seconds < 10: break
+        time.sleep(remain_seconds / 2)
 
 def main(user, password, weekdays, target_time, wait_opening, slack_token, slack_channel):
     try:

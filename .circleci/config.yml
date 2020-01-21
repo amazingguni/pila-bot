@@ -3,6 +3,7 @@ jobs:
   pila:
     docker:
       - image: circleci/python:3.6-browsers
+    parallelism: 4
     parameters:
       extra-opts:
         type: string
