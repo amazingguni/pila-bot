@@ -36,8 +36,11 @@ jobs:
 workflows:
   commit:
     jobs:
-      - pila
-  openning:
+      - pila:
+          context: soyeon
+      - pila:
+          context: jiye
+  openning-soyeon:
     triggers:
       - schedule:
           cron: "50 2 * * *"
@@ -47,4 +50,8 @@ workflows:
                 - master
     jobs:
       - pila:
+          context: soyeon
+          extra-opts : "--wait-opening"
+      - pila:
+          context: jiye
           extra-opts : "--wait-opening"
