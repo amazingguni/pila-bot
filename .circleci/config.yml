@@ -31,7 +31,9 @@ jobs:
           name: Reserve pilates
           command: |
             . venv/bin/activate
-            python pila.py -u "${USER}" -p "${PASSWORD}" -w "${WEEKDAYS}" -t "${TIME}" << parameters.extra-opts >>
+            python pila.py -u "${USER}" -p "${PASSWORD}" \
+              -w "${WEEKDAYS}" -t "${TIME}" \
+              -s "${SLACK_TOKEN}" -c "${SLACK_CHANNEL}" << parameters.extra-opts >>
 
 workflows:
   commit:
@@ -43,7 +45,7 @@ workflows:
   openning-soyeon:
     triggers:
       - schedule:
-          cron: "50 2 * * *"
+          cron: "50 2 * * 0,2,4"
           filters:
             branches:
               only:

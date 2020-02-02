@@ -12,35 +12,21 @@ from selenium.common.exceptions import NoSuchElementException
 
 from pytz import timezone
 from datetime import datetime, timedelta
+from slacker import Slacker
 
 TIMEOUT = 20
 LONG_TIMEOUT = 30
 
+# 화요일에는 수목가 열리고, 목요일에는 금토이 열리고, 일요일에는 월화
 OPENING_HOUR = 12
 OPENING_MINUTE = 0
-# OPENING_HOUR = 21
-# OPENING_MINUTE = 57
 
-# 화요일에는 수목가 열리고, 목요일에는 금토이 열리고, 일요일에는 월화
+
 KST = timezone('Asia/Seoul')
 
-def get_indexes_of_target_weekday_indexes(target_weekday_str):
-    WEEKDAY_STRS = '월화수목금토일'
-    weekday_indexes = []
-    for each in target_weekday_str:
-        if each not in WEEKDAY_STRS:
-            print(f'[ignored] {each} is not weekday string')
-        weekday_indexes.append(WEEKDAY_STRS.index(each))
-    return weekday_indexes
-
-def get_target_dates(target_weekday_indexes):
-    now = datetime.now().astimezone(KST)
-    # today_weekday = now.weekday()
-    # open_weekday = [1, 3, 6]
-    # if today_weekday not in open_weekday:
-    #     return []
-    target_dates = [now + timedelta(days=1), now + timedelta(days=2)]
-    return list(filter(lambda x: x.weekday() in target_weekday_indexes, target_dates))
+def get_index_of_weekday(weekday_str):
+    WEEKDAY_STRS = '일월화수목금토'
+    return WEEKDAY_STRS.index(weekday_str)
 
 def init_browser():
     options = Options()
@@ -76,13 +62,16 @@ def is_reserved_before(reservelist_element):
 def is_openned(reservelist_element):
     return '관련내용이 존재하지 않습니다' not in reservelist_element.text
         
-def reserve_date_class(browser, target_date, target_time):
-    target_date_str = target_date.strftime("%Y-%m-%d")
-    print(f'Try to reserve {target_date_str} {target_date.strftime("%A")}')
+def reserve_date_class(browser, target_datetime):
+    target_date_str = target_datetime.strftime("%Y-%m-%d")
+    target_time_str = target_datetime.strftime("%H:%M")
+    target_weekday = target_datetime.strftime("%A")
+    print(f'Try to reserve {target_date_str} {target_weekday}')
     TOTAL_RETRY_CNT = 30
     for i in range(TOTAL_RETRY_CNT):
         browser.execute_script(f"funcSearch01('{target_date_str}','C')")
-        reservelist_element = WebDriverWait(browser, TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#reserveList')))
+        reservelist_element = WebDriverWait(browser, TIMEOUT).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '#reserveList')))
         if is_reserved_before(reservelist_element):
             print(f'You have a reservation for this day.({target_date_str})')
             return []
@@ -98,7 +87,7 @@ def reserve_date_class(browser, target_date, target_time):
             class_name = li.find_element_by_css_selector('.mName div').text
             class_time = li.find_element_by_css_selector('.rTime div').text
             class_num = li.find_element_by_css_selector('.rNum div').text
-            if target_time not in class_time:
+            if target_time_str not in class_time:
                 continue
             if '(정원초과)' in class_num:
                 print(f'Can not reserve {class_name} {class_time}(정원초과)')
@@ -111,7 +100,8 @@ def reserve_date_class(browser, target_date, target_time):
             button_element = li.find_element_by_css_selector('.rbutton .complete5')
             button_element.click()
             # 상세 보기 팝업에서 예약 버튼 클릭
-            reserve_button_element = WebDriverWait(browser, TIMEOUT).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.AVBtn')))
+            reserve_button_element = WebDriverWait(browser, TIMEOUT).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, '.AVBtn')))
             reserve_button_element.click()
 
             # 수강 신청 완료 확인 버튼 클릭
@@ -138,7 +128,14 @@ def wait_for_openning_time(hour=OPENING_HOUR, minute=OPENING_MINUTE):
         if remain_seconds < 10: break
         time.sleep(remain_seconds / 2)
 
-def main(user, password, weekdays, target_time, wait_opening, slack_token, slack_channel):
+
+def send_slack_message(token, channel, message):
+    if not slack_token:
+        return
+    slack = Slacker(slack_token)
+    slack.chat.post_message(channel, message)
+
+def main(user, password, target_datetimes, wait_opening, slack_token, slack_channel):
     try:
         browser = init_browser()
         print('Start crawling')
@@ -146,35 +143,50 @@ def main(user, password, weekdays, target_time, wait_opening, slack_token, slack
         login(browser, user, password)
         display_date = get_display_date(browser)
         print(f'Today: {display_date}')
-        target_weekday_indexes = get_indexes_of_target_weekday_indexes(weekdays)
-        target_dates = get_target_dates(target_weekday_indexes)
-        if not target_dates:
-            print(f'There is not date to reservation.({weekdays})')
-            return
-        target_dates_str = ''.join([d.strftime("%Y-%m-%d %H:%M:%S") for d in target_dates])
-        print(f'target_dates: {target_dates_str}')
         if wait_opening:
             print('Wait opening time')
             wait_for_openning_time()
         reserved_classes = []
-        for date in target_dates:
-            reserved_classes += reserve_date_class(browser, date, target_time)
+        for target_datetime in target_datetimes:
+            reserved_classes += reserve_date_class(browser, target_datetime)
+        
         if reserved_classes:
             print()
-            print(f'[Reserved classes]')
             for each in reserved_classes:
                 print(f' - {each}')
+            message = f'[{user}] Successfully book pilates classes :dancer::dancer:\n' \
+                + '\n'.join([f'- {each}' for each in reserve_clasees])
+            print(message)
+            send_slack_message(slack_token, slack_channel, message)
         else:
-            print('Couldn\'t book pilates classes')
+            message = f'[{user}] Couldn\'t book pilates classes :sob::sob:'
+            print(message)
+            send_slack_message(slack_token, slack_channel, message)
+
     finally:
         pass
+
+def get_target_datetimes(time_str):
+    now = datetime.now().astimezone(KST)
+    ret = []
+    for each in time_str.split(','):
+        weekday_idx = get_index_of_weekday(each[0])
+        hour, minute = each[1:].split(':')
+        hour = int(hour)
+        minute = int(minute)
+        diff_day = (weekday_idx - now.weekday() ) % 7
+        if diff_day > 2: continue
+        target = now + timedelta(days=(weekday_idx - now.weekday() ) % 7)
+        target = target.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        ret.append(target)
+    return ret
+
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--user', '-u', required=True, help='Username of pilates homepage')
     parser.add_argument('--password', '-p', required=True, help='Password of pilates homepage')
-    parser.add_argument('--weekdays', '-w', required=True, help='Day of the class you want to book(e.g, 월수금)')
     parser.add_argument('--time', '-t', required=True, help='The time of the class you want to book(e.g, 20:00)')
     parser.add_argument('--slack-token', '-s', required=False, help='Slack token')
     parser.add_argument('--slack-channel', '-c', required=False, help='Slack channel')
@@ -183,13 +195,20 @@ if __name__ == '__main__':
 
     user = args.user
     password = args.password
-    weekdays = args.weekdays
-    target_time = args.time
+    target_datetimes = get_target_datetimes(args.time)
     slack_token = args.slack_token
     slack_channel = args.slack_channel
     wait_opening = args.wait_opening
     now = datetime.now().astimezone(KST)
+    
     print(f'Now: {now.strftime("%Y-%m-%d %H:%M:%S")}')
-    print(f'Book pilates class at {target_time} on {weekdays} now.({user})')
-    main(user, password, weekdays, target_time, wait_opening, slack_token, slack_channel)
+    print(f'Book pilates class at {args.time} now.({user})')
+    if not target_datetimes:
+        print(f'There is not date to reservation.({args.time})')
+        exit(1)
+    for target in target_datetimes:
+        print(f'Target Datetime')
+        print(f'  - {target.strftime("%Y-%m-%d %H:%M %A")}')
+    
+    main(user, password, target_datetimes, wait_opening, slack_token, slack_channel)
     
