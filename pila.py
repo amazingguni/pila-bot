@@ -155,7 +155,7 @@ def main(user, password, target_datetimes, wait_opening, slack_token, slack_chan
             for each in reserved_classes:
                 print(f' - {each}')
             message = f'[{user}] Successfully book pilates classes :dancer::dancer:\n' \
-                + '\n'.join([f'- {each}' for each in reserve_clasees])
+                + '\n'.join([f'- `{each[1]}`({each[2]})' for each in reserve_clasees])
             print(message)
             send_slack_message(slack_token, slack_channel, message)
         else:
