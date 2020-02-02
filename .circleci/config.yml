@@ -31,8 +31,7 @@ jobs:
           name: Reserve pilates
           command: |
             . venv/bin/activate
-            python pila.py -u "${USER}" -p "${PASSWORD}" \
-              -w "${WEEKDAYS}" -t "${TIME}" \
+            python pila.py -u "${USER}" -p "${PASSWORD}" -t "${TIME}" \
               -s "${SLACK_TOKEN}" -c "${SLACK_CHANNEL}" << parameters.extra-opts >>
 
 workflows:
