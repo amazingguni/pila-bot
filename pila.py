@@ -134,12 +134,11 @@ def send_slack_message(token, channel, title, message='', color="good"):
     if not slack_token:
         return
     slack = Slacker(slack_token)
-    attachment = [
-        {
-            "color": color,
-            "title": title
-        }
-    ]
+    attachment = {
+        "color": color,
+        "title": title
+    }
+    
     if message:
         attachment[0]['text'] = message
     if 'CIRCLE_BUILD_URL' in os.environ:
