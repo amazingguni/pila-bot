@@ -41,6 +41,10 @@ workflows:
           context: soyeon
       - pila:
           context: jiye
+      - pila:
+          context: seulb
+      - pila:
+          context: yjung
   openning-soyeon:
     triggers:
       - schedule:
@@ -55,4 +59,10 @@ workflows:
           extra-opts : "--wait-opening"
       - pila:
           context: jiye
+          extra-opts : "--wait-opening"
+      - pila:
+          context: seulb
+          extra-opts : "--wait-opening"
+      - pila:
+          context: yjung
           extra-opts : "--wait-opening"
