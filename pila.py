@@ -25,7 +25,7 @@ OPENING_MINUTE = 0
 KST = timezone('Asia/Seoul')
 
 def get_index_of_weekday(weekday_str):
-    WEEKDAY_STRS = '일월화수목금토'
+    WEEKDAY_STRS = '월화수목금토일'
     return WEEKDAY_STRS.index(weekday_str)
 
 def init_browser():
