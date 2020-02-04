@@ -13,6 +13,7 @@ from selenium.common.exceptions import NoSuchElementException
 from pytz import timezone
 from datetime import datetime, timedelta
 from slacker import Slacker
+from threading import Thread
 
 TIMEOUT = 20
 LONG_TIMEOUT = 30
@@ -129,42 +130,47 @@ def wait_for_openning_time(hour=OPENING_HOUR, minute=OPENING_MINUTE):
         time.sleep(remain_seconds / 2)
 
 
-def send_slack_message(token, channel, message):
+def send_slack_message(token, channel, title, message='', color="good"):
     if not slack_token:
         return
     slack = Slacker(slack_token)
-    slack.chat.post_message(channel, message)
+    attachments = [
+        {
+            "color": color,
+            "title": title
+        }
+    ]
+    if message:
+        attachments['text'] = message
+    if 'CIRCLE_BUILD_URL' in os.environ:
+        attachments['title_link'] = os.environ['CIRCLE_BUILD_URL']
+    slack.chat.post_message(channel, attachments=attachments, as_user=True)
 
-def main(user, password, target_datetimes, wait_opening, slack_token, slack_channel):
-    try:
-        browser = init_browser()
-        print('Start crawling')
-        print(f'Login {user}')
-        login(browser, user, password)
-        display_date = get_display_date(browser)
-        print(f'Today: {display_date}')
-        if wait_opening:
-            print('Wait opening time')
-            wait_for_openning_time()
-        reserved_classes = []
-        for target_datetime in target_datetimes:
-            reserved_classes += reserve_date_class(browser, target_datetime)
-        
-        if reserved_classes:
-            print()
-            for each in reserved_classes:
-                print(f' - {each}')
-            message = f'*[{user}]* Successfully book pilates classes :dancer::dancer:\n' \
-                + '\n'.join([f'- `{each[1]}`({each[2]})' for each in reserved_classes])
-            print(message)
-            send_slack_message(slack_token, slack_channel, message)
-        else:
-            message = f'*[{user}]* Couldn\'t book pilates classes :sob::sob:'
-            print(message)
-            send_slack_message(slack_token, slack_channel, message)
+class BookingThread(Thread):
+    def __init__(self, user, password, target_datetimes, wait_opening):
+        super(BookingThread, self).__init__()
+        self.user = user
+        self.password = password
+        self.target_datetimes = target_datetimes
+        self.wait_opening = wait_opening
+        self.reserved_classes = []
 
-    finally:
-        pass
+    def run(self):
+        try:
+            browser = init_browser()
+            print('Start crawling')
+            print(f'Login {self.user}')
+            login(browser, self.user, self.password)
+            display_date = get_display_date(browser)
+            print(f'Today: {display_date}')
+            if self.wait_opening:
+                print('Wait opening time')
+                wait_for_openning_time()
+            
+            for target_datetime in self.target_datetimes:
+                self.reserved_classes += reserve_date_class(browser, target_datetime)
+        finally:
+            pass
 
 def get_target_datetimes(time_str):
     now = datetime.now().astimezone(KST)
@@ -190,6 +196,7 @@ if __name__ == '__main__':
     parser.add_argument('--time', '-t', required=True, help='The time of the class you want to book(e.g, 20:00)')
     parser.add_argument('--slack-token', '-s', required=False, help='Slack token')
     parser.add_argument('--slack-channel', '-c', required=False, help='Slack channel')
+    parser.add_argument('--worker-cnt', '-w', required=False, type=int, default=1, help='Worker count')
     parser.add_argument('--wait-opening', action='store_true', help='True if you want to wait for opening time')
     args = parser.parse_args()
 
@@ -199,6 +206,7 @@ if __name__ == '__main__':
     slack_token = args.slack_token
     slack_channel = args.slack_channel
     wait_opening = args.wait_opening
+    worker_cnt = args.worker_cnt
     now = datetime.now().astimezone(KST)
     
     print(f'Now: {now.strftime("%Y-%m-%d %H:%M:%S")}')
@@ -209,6 +217,31 @@ if __name__ == '__main__':
     print(f'Target Datetime')
     for target in target_datetimes:
         print(f'  - {target.strftime("%Y-%m-%d %H:%M %A")}')
+    print(f'Use {worker_cnt} workers')
     
-    main(user, password, target_datetimes, wait_opening, slack_token, slack_channel)
+    threads = []
+    for i in range(worker_cnt):
+        t = BookingThread(user, password, target_datetimes, wait_opening)
+        threads.append(t)
+        t.start()
+    reserved_classes = []
+    for t in threads:
+        t.join()
+        reserved_classes += t.reserved_classes
+        
+    if reserved_classes:
+        print()
+        for each in reserved_classes:
+            print(f' - {each}')
+        title = f'*[{user}]* Successfully book pilates classes :dancer::dancer:'
+        message = '\n'.join([f'- `{each[1]}`({each[2]})' for each in reserved_classes])
+        print(title + '\n' + message)
+        send_slack_message(slack_token, slack_channel, title, message)
+    else:
+        title = f'*[{user}]* Couldn\'t book pilates classes :sob::sob:'
+        print(title)
+        send_slack_message(slack_token, slack_channel, title, color='danger')
+
+    
+        
     
