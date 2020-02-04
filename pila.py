@@ -138,7 +138,7 @@ def send_slack_message(token, channel, title, message='', color="good"):
         "color": color,
         "title": title
     }
-    
+
     if message:
         attachment[0]['text'] = message
     if 'CIRCLE_BUILD_URL' in os.environ:
@@ -232,12 +232,12 @@ if __name__ == '__main__':
         print()
         for each in reserved_classes:
             print(f' - {each}')
-        title = f'*[{user}]* Successfully book pilates classes :dancer::dancer:'
+        title = f'[{user}] Successfully book pilates classes :dancer:'
         message = '\n'.join([f'- `{each[1]}`({each[2]})' for each in reserved_classes])
         print(title + '\n' + message)
         send_slack_message(slack_token, slack_channel, title, message)
     else:
-        title = f'*[{user}]* Couldn\'t book pilates classes :sob::sob:'
+        title = f'[{user}] Couldn\'t book pilates classes :sob:'
         print(title)
         send_slack_message(slack_token, slack_channel, title, color='danger')
 
