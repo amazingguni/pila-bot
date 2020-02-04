@@ -155,7 +155,7 @@ def main(user, password, target_datetimes, wait_opening, slack_token, slack_chan
             for each in reserved_classes:
                 print(f' - {each}')
             message = f'*[{user}]* Successfully book pilates classes :dancer::dancer:\n' \
-                + '\n'.join([f'- `{each[1]}`({each[2]})' for each in reserve_clasees])
+                + '\n'.join([f'- `{each[1]}`({each[2]})' for each in reserved_classes])
             print(message)
             send_slack_message(slack_token, slack_channel, message)
         else:
@@ -206,8 +206,8 @@ if __name__ == '__main__':
     if not target_datetimes:
         print(f'There is not date to reservation.({args.time})')
         exit(1)
+    print(f'Target Datetime')
     for target in target_datetimes:
-        print(f'Target Datetime')
         print(f'  - {target.strftime("%Y-%m-%d %H:%M %A")}')
     
     main(user, password, target_datetimes, wait_opening, slack_token, slack_channel)
