@@ -134,17 +134,17 @@ def send_slack_message(token, channel, title, message='', color="good"):
     if not slack_token:
         return
     slack = Slacker(slack_token)
-    attachments = [
+    attachment = [
         {
             "color": color,
             "title": title
         }
     ]
     if message:
-        attachments['text'] = message
+        attachment[0]['text'] = message
     if 'CIRCLE_BUILD_URL' in os.environ:
-        attachments['title_link'] = os.environ['CIRCLE_BUILD_URL']
-    slack.chat.post_message(channel, attachments=attachments, as_user=True)
+        attachment['title_link'] = os.environ['CIRCLE_BUILD_URL']
+    slack.chat.post_message(channel, attachments=[attachment], as_user=True)
 
 class BookingThread(Thread):
     def __init__(self, user, password, target_datetimes, wait_opening):
