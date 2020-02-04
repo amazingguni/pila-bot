@@ -175,6 +175,7 @@ def get_target_datetimes(time_str):
     now = datetime.now().astimezone(KST)
     ret = []
     for each in time_str.split(','):
+        each = each.strip()
         weekday_idx = get_index_of_weekday(each[0])
         hour, minute = each[1:].split(':')
         hour = int(hour)
