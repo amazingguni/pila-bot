@@ -234,7 +234,7 @@ if __name__ == '__main__':
         for each in reserved_classes:
             print(f' - {each}')
         title = f'[{user}] Successfully book pilates classes :dancer:'
-        message = '\n'.join([f'- `{each[1]}`({each[2]})' for each in reserved_classes])
+        message = '\n'.join([f'- `{each[1]}`({each[0]})' for each in reserved_classes])
         print(title + '\n' + message)
         send_slack_message(slack_token, slack_channel, title, message)
     else:
