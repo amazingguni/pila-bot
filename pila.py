@@ -140,7 +140,7 @@ def send_slack_message(token, channel, title, message='', color="good"):
     }
 
     if message:
-        attachment[0]['text'] = message
+        attachment['text'] = message
     if 'CIRCLE_BUILD_URL' in os.environ:
         attachment['title_link'] = os.environ['CIRCLE_BUILD_URL']
     slack.chat.post_message(channel, attachments=[attachment], as_user=True)
