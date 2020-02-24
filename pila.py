@@ -54,8 +54,8 @@ def login(browser, user, password):
     elements[0].click()
 
 def get_display_date(browser):
-    element = WebDriverWait(browser, TIMEOUT).until(EC.presence_of_element_located((By.ID, 'datepickerC')))
-    return element.get_attribute("value")
+    element = WebDriverWait(browser, TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'btnShowWeek')))
+    return element.text
 
 def is_reserved_before(reservelist_element):
     return '(예약완료)' in reservelist_element.text
@@ -93,17 +93,29 @@ def reserve_date_class(browser, target_datetime):
             if '(정원초과)' in class_num:
                 print(f'Can not reserve {class_name} {class_time}(정원초과)')
                 break
-            
+            # 정원초과나 예약 가능일 때 (정원초과), (예약가능)이 뜨지 않는 문제가 있어서
+            # 그냥 숫자로 판단하는 것으로 변경, 상태에 따라 버튼의 class도 변경되지 않는 것으로 보임
+            print(f'booked_num_text: {class_num}')
+            booked_num_text = class_num.replace('(예약가능)', '').replace(' ', '')
+            current_cnt, limit = [int(each) for each in booked_num_text.split('/')]
+            if current_cnt >= limit:
+                print(f'Can not reserve {class_name} {class_time}(정원초과)')
+                break
             # 리스트에서 상세 보기 버튼 클릭
             # complete1: 예약 불가능(내 예약 존재)
             # complete4: 예약 불가능(내 예약 없음)
             # complete5: 예약 가능(내 예약 없음)
-            button_element = li.find_element_by_css_selector('.rbutton .complete5')
-            button_element.click()
+            # 광고가 클릭되는 경우가 많아서 onclick을 받아서 실행시키는 것으로 구현 변경
+            button_element = li.find_element_by_css_selector('.rbutton button')
+            button_onclick_text = button_element.get_attribute('onclick')
+            browser.execute_script(button_onclick_text)
+            # button_element.click()
             # 상세 보기 팝업에서 예약 버튼 클릭
             reserve_button_element = WebDriverWait(browser, TIMEOUT).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, '.AVBtn')))
-            reserve_button_element.click()
+            reserve_button_onclick = reserve_button_element.get_attribute('onclick')
+            browser.execute_script(reserve_button_onclick)
+            # reserve_button_element.click()
 
             # 수강 신청 완료 확인 버튼 클릭
             WebDriverWait(browser, TIMEOUT).until(EC.alert_is_present())
