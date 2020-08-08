@@ -8,6 +8,9 @@ jobs:
       extra-opts:
         type: string
         default: ""
+      time:
+        type: string
+        default: ""
     steps:
       - checkout
       - restore_cache:
@@ -31,7 +34,7 @@ jobs:
           name: Reserve pilates
           command: |
             . venv/bin/activate
-            python pila.py -u "${USER}" -p "${PASSWORD}" -t "${TIME}" -w 3 \
+            python pila.py -u "${USER}" -p "${PASSWORD}" -t "<< parameters.time >>" -w 3 \
               -s "${SLACK_TOKEN}" -c "${SLACK_CHANNEL}" << parameters.extra-opts >>
 
 workflows:
@@ -39,6 +42,7 @@ workflows:
     jobs:
       - pila:
           context: soyeon
+          time: "월20:00,화19:30,수20:00,금20:00"
       # - pila:
       #     context: jiye
       # - pila:
@@ -57,6 +61,7 @@ workflows:
       - pila:
           context: soyeon
           extra-opts: "--wait-opening"
+          time: "월20:00,화19:30,수20:00,금20:00"
       # - pila:
       #     context: jiye
       #     extra-opts: "--wait-opening"
