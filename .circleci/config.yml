@@ -39,16 +39,16 @@ workflows:
     jobs:
       - pila:
           context: soyeon
-      - pila:
-          context: jiye
-      - pila:
-          context: seulb
-      - pila:
-          context: yjung
+      # - pila:
+      #     context: jiye
+      # - pila:
+      #     context: seulb
+      # - pila:
+      #     context: yjung
   openning-soyeon:
     triggers:
       - schedule:
-          cron: "50 2 * * 0,2,4"
+          cron: "50 2 * * 0,3"
           filters:
             branches:
               only:
@@ -56,13 +56,13 @@ workflows:
     jobs:
       - pila:
           context: soyeon
-          extra-opts : "--wait-opening"
-      - pila:
-          context: jiye
-          extra-opts : "--wait-opening"
-      - pila:
-          context: seulb
-          extra-opts : "--wait-opening"
-      - pila:
-          context: yjung
-          extra-opts : "--wait-opening"
+          extra-opts: "--wait-opening"
+      # - pila:
+      #     context: jiye
+      #     extra-opts: "--wait-opening"
+      # - pila:
+      #     context: seulb
+      #     extra-opts: "--wait-opening"
+      # - pila:
+      #     context: yjung
+      #     extra-opts: "--wait-opening"

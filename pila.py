@@ -18,7 +18,7 @@ from threading import Thread
 TIMEOUT = 20
 LONG_TIMEOUT = 30
 
-# 화요일에는 수목가 열리고, 목요일에는 금토이 열리고, 일요일에는 월화
+# 일요일에는 월화수 수요일에는 목금토 신청
 OPENING_HOUR = 12
 OPENING_MINUTE = 0
 
@@ -38,10 +38,6 @@ def init_browser():
     else:
         browser = webdriver.Chrome(executable_path="./driver/mac/chromedriver", options=options)
     browser.get("http://aprilpilates2.flexgym.pro/mobile2/")
-    element = WebDriverWait(browser, LONG_TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'banner99_chk')))
-    element.click()
-    element = WebDriverWait(browser, TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'pop_close')))
-    element.click()
     return browser
 
 def login(browser, user, password):
@@ -50,8 +46,7 @@ def login(browser, user, password):
     element = WebDriverWait(browser, TIMEOUT).until(EC.presence_of_element_located((By.ID, "memberPW")))
     element.send_keys(password)
     element.send_keys(Keys.RETURN)
-    elements = WebDriverWait(browser, TIMEOUT).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, '#paymentList li')))
-    elements[0].click()
+    
 
 def get_display_date(browser):
     element = WebDriverWait(browser, TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, 'btnShowWeek')))
@@ -157,6 +152,17 @@ def send_slack_message(token, channel, title, message='', color="good"):
         attachment['title_link'] = os.environ['CIRCLE_BUILD_URL']
     slack.chat.post_message(channel, attachments=[attachment], as_user=True)
 
+def click_payment(browser):
+    pop_checkbox = WebDriverWait(browser, TIMEOUT).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, '.banner_btn99 .banner99_chk')))
+    pop_checkbox.click()
+    pop_close = WebDriverWait(browser, TIMEOUT).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, '.banner_btn99 .pop_close')))
+    pop_close.click()
+    
+    elements = WebDriverWait(browser, TIMEOUT).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, '#paymentList li')))
+    elements[0].click()
+
 class BookingThread(Thread):
     def __init__(self, user, password, target_datetimes, wait_opening):
         super(BookingThread, self).__init__()
@@ -172,6 +178,7 @@ class BookingThread(Thread):
             print('Start crawling')
             print(f'Login {self.user}')
             login(browser, self.user, self.password)
+            click_payment(browser)
             display_date = get_display_date(browser)
             print(f'Today: {display_date}')
             if self.wait_opening:
