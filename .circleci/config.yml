@@ -1,5 +1,10 @@
 version: 2.1
 jobs:
+  echo:
+    docker:
+      - image: circleci/python:3.6-browsers
+    steps:
+      - run: echo "echo echo"
   pila:
     docker:
       - image: circleci/python:3.6-browsers
@@ -40,6 +45,7 @@ jobs:
 workflows:
   commit:
     jobs:
+      - echo
       - pila:
           context: soyeon
           time: "월20:00,화19:30,수20:00,금20:00"
@@ -58,6 +64,7 @@ workflows:
               only:
                 - master
     jobs:
+      - echo
       - pila:
           context: soyeon
           extra-opts: "--wait-opening"
