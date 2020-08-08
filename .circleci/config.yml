@@ -43,8 +43,8 @@ workflows:
   commit:
     jobs:
       - echo
-#       - pila:
-#           context: soyeon
+      - pila:
+          context: soyeon
 #       - pila:
 #           context: jiye
 #       - pila:
@@ -61,9 +61,9 @@ workflows:
                 - master
     jobs:
       - echo
-#       - pila:
-#           context: soyeon
-#           extra-opts : "--wait-opening"
+      - pila:
+          context: soyeon
+          extra-opts : "--wait-opening"
 #       - pila:
 #           context: jiye
 #           extra-opts : "--wait-opening"
