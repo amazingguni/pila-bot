@@ -89,7 +89,7 @@ def reserve_date_class(browser, target_datetime):
                 continue
             if '(정원초과)' in class_num:
                 print(f'Can not reserve {class_name} {class_time}(정원초과)')
-                break
+                return [(class_name, f'{target_date_str}({target_weekday}) {class_time}', '정원 초과:pig:')]
             # 정원초과나 예약 가능일 때 (정원초과), (예약가능)이 뜨지 않는 문제가 있어서
             # 그냥 숫자로 판단하는 것으로 변경, 상태에 따라 버튼의 class도 변경되지 않는 것으로 보임
             print(f'booked_num_text: {class_num}')
@@ -97,7 +97,7 @@ def reserve_date_class(browser, target_datetime):
             current_cnt, limit = [int(each) for each in booked_num_text.split('/')]
             if current_cnt >= limit:
                 print(f'Can not reserve {class_name} {class_time}(정원초과)')
-                break
+                return [(class_name, f'{target_date_str}({target_weekday}) {class_time}', '정원 초과:pig:')]
             # 리스트에서 상세 보기 버튼 클릭
             # complete1: 예약 불가능(내 예약 존재)
             # complete4: 예약 불가능(내 예약 없음)
@@ -120,10 +120,11 @@ def reserve_date_class(browser, target_datetime):
             alert_text = alert.text
             alert.accept()
             if '수강예약이 완료되었습니다' in alert_text:
-                print(f'필라테스 예약이 완료되었습니다. {class_name} {class_time}')
-                return [(class_name, class_time)] 
+                print(f'필라테스 예약이 완료되었습니다. {class_name} {class_time}, {target_date_str}')
+                return [(class_name, f'{target_date_str}({target_weekday}) {class_time}', '예약 성공:tada:')]
         except NoSuchElementException as e:
             print(f'[error] {str(e)}')
+            return [(class_name, f'{target_date_str}({target_weekday})', '알수 없는 에러:pig:')]
     return []
 
 def wait_for_openning_time(hour=OPENING_HOUR, minute=OPENING_MINUTE):
@@ -255,7 +256,7 @@ if __name__ == '__main__':
         for each in reserved_classes:
             print(f' - {each}')
         title = f'[{user}] Successfully book pilates classes :dancer:'
-        message = '\n'.join([f'- `{each[1]}`({each[0]})' for each in reserved_classes])
+        message = '\n'.join([f'- {each[1]}({each[0]}) - {each[2]}' for each in reserved_classes])
         print(title + '\n' + message)
         send_slack_message(slack_token, slack_channel, title, message)
     else:

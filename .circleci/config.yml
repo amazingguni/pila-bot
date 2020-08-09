@@ -45,7 +45,7 @@ jobs:
 workflows:
   commit:
     jobs:
-      - echo
+      # - echo
       - pila:
           context: soyeon
           time: "화19:30,수20:00,금20:00"
@@ -64,7 +64,7 @@ workflows:
               only:
                 - master
     jobs:
-      - echo
+      # - echo
       - pila:
           context: soyeon
           extra-opts: "--wait-opening"
