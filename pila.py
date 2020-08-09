@@ -19,6 +19,8 @@ TIMEOUT = 20
 LONG_TIMEOUT = 30
 
 # 일요일에는 월화수 수요일에는 목금토 신청
+# 몇일 이후의 날짜까지를 예약 대상으로 삼을지
+DIFF_DAY = 3
 OPENING_HOUR = 12
 OPENING_MINUTE = 0
 
@@ -200,7 +202,7 @@ def get_target_datetimes(time_str):
         hour = int(hour)
         minute = int(minute)
         diff_day = (weekday_idx - now.weekday() ) % 7
-        if diff_day > 2: continue
+        if diff_day > DIFF_DAY: continue
         target = now + timedelta(days=(weekday_idx - now.weekday() ) % 7)
         target = target.replace(hour=hour, minute=minute, second=0, microsecond=0)
         ret.append(target)
