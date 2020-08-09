@@ -48,7 +48,7 @@ workflows:
       - echo
       - pila:
           context: soyeon
-          time: "월20:00,화19:30,수20:00,금20:00"
+          time: "화19:30,수20:00,금20:00"
       # - pila:
       #     context: jiye
       # - pila:
