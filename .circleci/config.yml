@@ -45,16 +45,21 @@ jobs:
 workflows:
   commit:
     jobs:
-      # - echo
+      - hold:
+          type: approval 
       - pila:
           context: soyeon
           time: "화19:30,수20:00,금20:00"
+          requires: 
+           - hold
       # - pila:
       #     context: jiye
       #     time: "화19:30,수20:00,금20:00"
       - pila:
           context: seulb
           time: "화19:30,수20:00,목19:30,금20:00"
+          requires: 
+           - hold
 #       - pila:
 #           context: somi
 #           time: "화19:30,목19:30"
@@ -70,7 +75,6 @@ workflows:
               only:
                 - master
     jobs:
-      # - echo
       - pila:
           context: soyeon
           extra-opts: "--wait-opening"
