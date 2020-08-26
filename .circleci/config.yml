@@ -55,9 +55,9 @@ workflows:
       - pila:
           context: seulb
           time: "화19:30,수20:00,목19:30,금20:00"
-      - pila:
-          context: somi
-          time: "화19:30,목19:30"
+#       - pila:
+#           context: somi
+#           time: "화19:30,목19:30"
       # - pila:
       #     context: yjung
       #     time: "화19:30,수20:00,금20:00"
@@ -84,10 +84,10 @@ workflows:
           context: seulb
           extra-opts: "--wait-opening"
           time: "화19:30,수20:00,목19:30,금20:00"
-      - pila:
-          context: somi
-          extra-opts: "--wait-opening"
-          time: "화19:30,목19:30"
+#       - pila:
+#           context: somi
+#           extra-opts: "--wait-opening"
+#           time: "화19:30,목19:30"
       # - pila:
       #     context: yjung
       #     extra-opts: "--wait-opening"
