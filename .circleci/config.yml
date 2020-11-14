@@ -78,16 +78,16 @@ workflows:
       - pila:
           context: soyeon
           extra-opts: "--wait-opening"
-          time: "화19:30,수20:00,금20:00"
+          time: "월19:00,수19:00,금19:00"
       # - pila:
       #     context: jiye
       #     extra-opts: "--wait-opening"
       #     time: "화19:30,수20:00,금20:00"
 
-      - pila:
-          context: seulb
-          extra-opts: "--wait-opening"
-          time: "화19:30,수20:00,목19:30,금20:00"
+#       - pila:
+#           context: seulb
+#           extra-opts: "--wait-opening"
+#           time: "화19:30,수20:00,목19:30,금20:00"
 #       - pila:
 #           context: somi
 #           extra-opts: "--wait-opening"
