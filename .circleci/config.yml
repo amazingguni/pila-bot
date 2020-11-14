@@ -49,16 +49,16 @@ workflows:
           type: approval 
       - pila:
           context: soyeon
-          time: "화19:30,수20:00,금20:00"
+          time: "월19:00,수19:00,금19:00"
           requires: 
            - hold
       # - pila:
       #     context: jiye
       #     time: "화19:30,수20:00,금20:00"
-      - pila:
-          context: seulb
-          time: "화19:30,수20:00,목19:30,금20:00"
-          requires: 
+#       - pila:
+#           context: seulb
+#           time: "화19:30,수20:00,목19:30,금20:00"
+#           requires: 
            - hold
 #       - pila:
 #           context: somi
