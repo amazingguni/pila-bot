@@ -5,4 +5,4 @@ pytz==2019.3
 requests==2.22.0
 selenium==3.141.0
 slacker==0.13.0
-urllib3==1.25.7
+urllib3==1.26.5
